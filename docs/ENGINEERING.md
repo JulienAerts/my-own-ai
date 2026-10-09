@@ -230,7 +230,7 @@ the recommendation picks the best that fits.
 | `src/worker/tts.worker.ts`, `src/tts.ts` | Read aloud: Piper voices (onnxruntime-web WASM + espeak-ng phonemizer) or local device voices, played sentence by sentence. |
 | `src/ui/VoiceMode.tsx`, `src/voice/listener.ts` | Hands-free voice mode: listen (energy VAD) → transcribe → answer → read aloud → listen. |
 | `src/ui/ReadAloudCard.tsx` | Settings → Voice: auto-read, speed, voice download/preview/selection. |
-| `src/ui/HistoryPanel.tsx` | Conversation history: drawer on desktop, bottom sheet on phones. Grouped by date, with search, open and delete. |
+| `src/ui/HistoryPanel.tsx` | Conversation history: drawer on desktop, bottom sheet on phones. Pinned first, then grouped by date; search inside every message (`src/search.ts`); a ⋯ menu per row to rename, pin, save as Markdown or delete. |
 | `src/net.ts` | Download-time estimate and metered-connection detection. |
 | `src/boot.ts` | Boot store: probe → pick model → download + load (one progress stream from web-llm) → chat. Pause terminates the worker. |
 | `src/ui/BootScreen.tsx` | Boot screen: welcome (first run, one tap to download), progress bar with steps, errors, unsupported browsers. |
@@ -796,6 +796,16 @@ before and isn't stored.
   memories), and conversation starters.
 - **Prompt**: `You are "<name>", an assistant that runs entirely on the user's device`,
   then "Your role: …", then the user's own instructions (Settings → App), memories, tools.
+- **Managing conversations**: `ConversationMeta` has `pinned` and `renamed` (a title the user set;
+  `saveChat` keeps both, backups carry them; an empty name goes back to the automatic title).
+  Search (`src/search.ts`) loads every conversation's messages once per opening of the panel and
+  matches case- and accent-insensitively, every word somewhere in the conversation; conversations
+  with one message holding all the words come first. A result opens its conversation scrolled to
+  that message, outlined for a moment (`.entry[data-ts]`). The row menu is placed against the
+  window (measured, since the sheet's transform shifts "fixed"), so the list can't clip it; it
+  flips upward near the bottom, and Escape closes it, not the panel. After "New conversation"
+  the message box gets the focus back once the panel has closed (the browser returns it to the
+  history button first).
 - **Conversations** record their assistant (`ConversationMeta.assistantId`, set once by
   `saveChat`); the history shows its emoji and name. The header button opens the picker;
   picking starts a new conversation with that assistant ("New conversation" keeps the

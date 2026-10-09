@@ -7,6 +7,15 @@ Releasing: add a section for the new version at the top (`## 0.20.0 — YYYY-MM-
 push the tag (see `docs/RELEASING.md`). The release page and the update the app offers
 show that section; a tag without one doesn't build.
 
+## 0.21.0 — 2026-10-09
+
+- Search finds words inside your conversations, not just their titles, ignoring accents and
+  capitals. Results show the matching passage, and open the conversation on that message.
+- Rename and pin conversations: a ⋯ menu on each one (rename, pin to the top, save as
+  Markdown, delete). Pinned conversations stay at the top.
+- After "New conversation", you can type right away (the message box has the focus).
+- Backups keep each conversation's name, pin and assistant.
+
 ## 0.20.1 — 2026-10-09
 
 - The Android app is in each release, signed with the project's key. Phones that had a test

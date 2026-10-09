@@ -73,6 +73,10 @@ export interface ConversationMeta {
   messages: number;
   /** The assistant the conversation is with; unset = the built-in one. */
   assistantId?: string;
+  /** Kept at the top of the list. */
+  pinned?: boolean;
+  /** The title was set by the user (never replaced automatically). */
+  renamed?: boolean;
 }
 
 /** A document added to a conversation (see src/docs/store.ts). */
@@ -185,22 +189,26 @@ export async function loadChat(id: string): Promise<ChatEntry[]> {
 
 /**
  * Save messages and refresh the history entry. An empty conversation is removed.
- * `assistantId` is recorded once (a conversation keeps its assistant).
+ * `assistantId` is recorded once (a conversation keeps its assistant); a title the user
+ * set and the pin are kept. `keep`: those, from a backup.
  */
-export async function saveChat(id: string, entries: ChatEntry[], assistantId?: string): Promise<void> {
+export async function saveChat(id: string, entries: ChatEntry[], assistantId?: string, keep?: Pick<ConversationMeta, 'title' | 'renamed' | 'pinned'>): Promise<void> {
   const d = await db();
   const tx = d.transaction(['chats', 'conversations'], 'readwrite');
   if (!entries.length) {
     await Promise.all([tx.objectStore('chats').delete(id), tx.objectStore('conversations').delete(id), tx.done]);
     return;
   }
-  const prev = await tx.objectStore('conversations').get(id);
+  const found = await tx.objectStore('conversations').get(id);
+  const prev = keep ? { ...found, ...keep } : found;
   const last = entries[entries.length - 1].ts || Date.now();
   await Promise.all([
     tx.objectStore('chats').put(entries, id),
     tx.objectStore('conversations').put({
       id,
-      title: prev?.title && prev.messages > 0 ? prev.title : titleOf(entries),
+      title: prev?.title && (prev.renamed || (found?.messages ?? 0) > 0) ? prev.title : titleOf(entries),
+      ...(prev?.renamed && { renamed: true }),
+      ...(prev?.pinned && { pinned: true }),
       createdAt: prev?.createdAt ?? (entries[0].ts || last),
       updatedAt: last,
       messages: entries.filter((e) => e.role === 'user' || e.role === 'assistant').length,
@@ -212,6 +220,36 @@ export async function saveChat(id: string, entries: ChatEntry[], assistantId?: s
 
 export async function getConversation(id: string): Promise<ConversationMeta | undefined> {
   return (await db()).get('conversations', id);
+}
+
+/** Rename (an empty title goes back to the automatic one) or pin a conversation. */
+export async function updateConversation(id: string, change: { title?: string; pinned?: boolean }): Promise<ConversationMeta | undefined> {
+  const d = await db();
+  const meta = await d.get('conversations', id);
+  if (!meta) return undefined;
+  const next: ConversationMeta = { ...meta };
+  if (change.title !== undefined) {
+    const title = change.title.replace(/\s+/g, ' ').trim().slice(0, 120);
+    if (title) Object.assign(next, { title, renamed: true });
+    else {
+      delete next.renamed;
+      next.title = titleOf(await loadChat(id));
+    }
+  }
+  if (change.pinned !== undefined) {
+    if (change.pinned) next.pinned = true;
+    else delete next.pinned;
+  }
+  await d.put('conversations', next);
+  return next;
+}
+
+/** Every conversation's messages, by id (for search). */
+export async function allChats(): Promise<Map<string, ChatEntry[]>> {
+  const d = await db();
+  const tx = d.transaction('chats');
+  const [keys, values] = await Promise.all([tx.store.getAllKeys(), tx.store.getAll()]);
+  return new Map(keys.map((k, i) => [String(k), values[i]]));
 }
 
 /** All conversations, most recent first. */

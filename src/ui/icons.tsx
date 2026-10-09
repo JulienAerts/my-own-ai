@@ -196,3 +196,7 @@ export const ChevronIcon = () => (
     <path d="m6 9 6 6 6-6" />
   </Icon>
 );
+
+export const MoreIcon = () => (
+  <Icon size={18}><circle cx="5" cy="12" r="1.4" fill="currentColor" /><circle cx="12" cy="12" r="1.4" fill="currentColor" /><circle cx="19" cy="12" r="1.4" fill="currentColor" /></Icon>
+);

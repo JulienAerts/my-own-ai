@@ -107,7 +107,12 @@ export async function importBackup(file: File): Promise<ImportResult> {
       result.skipped++;
       continue;
     }
-    await saveChat(id, entries);
+    const m = c.meta as Partial<ConversationMeta>;
+    await saveChat(id, entries, typeof m.assistantId === 'string' ? m.assistantId : undefined, {
+      title: typeof m.title === 'string' ? m.title.slice(0, 120) : '',
+      ...(m.renamed === true && { renamed: true }),
+      ...(m.pinned === true && { pinned: true }),
+    });
     if (here) result.updated++;
     else result.added++;
   }

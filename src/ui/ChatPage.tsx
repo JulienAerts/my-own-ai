@@ -204,7 +204,11 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
   /** `withAssistant`: for a new conversation, who it's with (an existing one keeps its own). */
   async function openChat(id: string, withAssistant?: string) {
     const [e, meta] = await Promise.all([loadChat(id), getConversation(id)]);
-    setAssistantId(meta?.assistantId ?? withAssistant);
+    show(id, e, meta?.assistantId ?? withAssistant);
+  }
+
+  function show(id: string, e: ChatEntry[], assistant: string | undefined) {
+    setAssistantId(assistant);
     setChatId(id);
     setEntries(e);
     setError(null);
@@ -212,13 +216,14 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
     // Code variables belong to one conversation.
     resetSandbox();
     setLoaded(true);
-    await setSetting('currentChat', id);
+    void setSetting('currentChat', id);
   }
 
   /** A new conversation: with the same assistant, or `null` for the default one, or another one's id. */
   function newChat(withAssistant?: string | null) {
-    // Not saved until the first message, so empty conversations never pile up.
-    openChat(newChatId(), withAssistant === undefined ? assistantId : withAssistant ?? undefined);
+    // Not saved until the first message, so empty conversations never pile up. Shown at once
+    // (nothing to load): a message typed right away belongs to it.
+    show(newChatId(), [], withAssistant === undefined ? assistantId : withAssistant ?? undefined);
     inputRef.current?.focus();
   }
 
@@ -246,7 +251,22 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
     setAwayFromEnd(false);
     bottom.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
   }
+  // A search result opens its conversation on the matching message, highlighted for a moment.
+  const [focusTs, setFocusTs] = useState<number | null>(null);
+  const focusComposer = useRef(false);
   useEffect(() => {
+    if (focusTs !== null) {
+      const el = document.querySelector(`.entry[data-ts="${focusTs}"]`)?.firstElementChild as HTMLElement | null;
+      setFocusTs(null);
+      if (el) {
+        stick.current = false;
+        setAwayFromEnd(true);
+        el.scrollIntoView({ block: 'center' });
+        el.classList.add('found');
+        setTimeout(() => el.classList.remove('found'), 2400);
+        return;
+      }
+    }
     if (stick.current) bottom.current?.scrollIntoView({ block: 'end' });
   }, [entries, partial]);
 
@@ -692,7 +712,7 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
           </div>
         )}
         {entries.map((e, i) => (
-          <Entry
+          <div class="entry" data-ts={e.ts}><Entry
             e={e}
             versions={switchers.has(i) ? { ...versionsAt(entries, switchers.get(i)!)!, onShow: (n) => showVersion(switchers.get(i)!, n) } : undefined}
             speaking={voice.speaking}
@@ -702,7 +722,7 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
             onUndoMemory={() => undoMemory(i)}
             onManageMemory={() => openSettings('memory')}
             onEdit={(text) => editAndResend(i, text)}
-          />
+          /></div>
         ))}
         {partial?.thought && <Thinking text={partial.thought.text} secs={partial.thought.secs} live={!partial.thought.done} />}
         {partial && !(partial.thought && !partial.thought.done) && (
@@ -834,10 +854,24 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
       <HistoryPanel
         open={history}
         onClose={() => setHistory(false)}
+        // Closing hands focus back to the history button: after "New conversation", the
+        // message box should have it.
+        onClosed={() => {
+          if (focusComposer.current) {
+            focusComposer.current = false;
+            inputRef.current?.focus();
+          }
+        }}
         currentId={chatId}
         busy={running}
-        onOpen={openChat}
-        onNew={() => newChat()}
+        onOpen={(id, ts) => {
+          if (ts !== undefined) setFocusTs(ts);
+          void openChat(id);
+        }}
+        onNew={() => {
+          focusComposer.current = true;
+          newChat();
+        }}
       />
     </div>
   );

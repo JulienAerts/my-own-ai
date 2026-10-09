@@ -26,6 +26,7 @@ test('an unrelated question brings nothing back', async ({ page }) => {
   const long = (n: number) => `Answer ${n}. ${'This part of the answer is long, to fill the conversation. '.repeat(30)}`;
   await openApp(page, { replies: Array.from({ length: 11 }, (_, i) => long(i + 1)) });
   await send(page, 'The door code for the cellar is 4417.');
+  await expect(page.locator('.msg.assistant')).toHaveCount(1);
   for (let i = 2; i <= 10; i++) {
     await send(page, `Tell me something interesting about topic number ${i}.`);
     await expect(page.locator('.msg.assistant')).toHaveCount(i);

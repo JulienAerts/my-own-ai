@@ -340,6 +340,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 }
 .suggestion:hover { border-color: var(--accent); transform: translateY(-1px); }
 
+.entry { display: contents; }
+.found { outline: 2px solid var(--accent); outline-offset: 4px; transition: outline-color 0.6s; }
 .msg { max-width: 85%; white-space: pre-wrap; overflow-wrap: anywhere; animation: rise 0.25s ease both; }
 .msg.user {
   align-self: flex-end; padding: 10px 16px; border-radius: 20px 20px 6px 20px;
@@ -600,6 +602,24 @@ dialog.drawer .sheet-body { height: 100%; }
   padding: 9px 12px; border: 0; background: transparent; text-align: left; border-radius: 12px;
 }
 .history-title { font-weight: 550; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-pin { display: inline-flex; vertical-align: -2px; margin-right: 5px; color: var(--accent-fg); }
+.history-pin svg { width: 14px; height: 14px; }
+.history-snippet { color: var(--text); opacity: 0.85; line-height: 1.4; overflow-wrap: anywhere; }
+.history-snippet mark { background: color-mix(in srgb, var(--accent) 24%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; font-weight: 600; }
+.history-rename { flex: 1; min-width: 0; margin: 4px; }
+.row-menu { position: relative; flex: none; }
+.history-item:has(.menu) .icon-btn { opacity: 1; }
+.menu {
+  position: fixed; z-index: 30; min-width: 180px; padding: 6px; visibility: hidden; /* until placed */
+  display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; box-shadow: var(--shadow); animation: rise 0.12s ease both;
+}
+.menu-item {
+  text-align: left; padding: 8px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--text); font: inherit; font-size: 0.9rem;
+}
+.menu-item:hover:not(:disabled), .menu-item:focus-visible { background: var(--surface-2); outline: none; }
+.menu-item.danger { color: var(--danger, #d33); }
+.menu-item:disabled { opacity: 0.45; }
 
 /* ---------- Voice mode ---------- */
 .voice {
@@ -1093,7 +1113,8 @@ dialog.sheet:focus { outline: none; }
 .chat .chat-head { animation: drop 0.45s ease both; }
 .chat .composer { animation: rise 0.5s 0.08s ease both; }
 @keyframes drop { from { opacity: 0; transform: translateY(-10px); } }
-.messages > :is(.msg, .user-wrap, .tool, .think, .code-run, .memory-chip, .doc-card, .summary-row, .approval) {
+.messages > :is(.msg, .user-wrap, .tool, .think, .code-run, .memory-chip, .doc-card, .summary-row, .approval),
+.messages > .entry > :is(.msg, .user-wrap, .tool, .think, .code-run, .memory-chip, .doc-card, .summary-row, .approval) {
   animation: msg-in 0.32s cubic-bezier(0.2, 0.8, 0.3, 1) both;
 }
 @keyframes msg-in { from { opacity: 0; transform: translateY(10px) scale(0.985); } }
