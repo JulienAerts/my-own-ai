@@ -922,4 +922,6 @@ export const FR: Record<string, string> = {
   "More": "Plus",
   "{n} conversation found": "{n} conversation trouvée",
   "{n} conversations found": "{n} conversations trouvées",
+  "The backup couldn’t be saved: {error}": "La sauvegarde n’a pas pu être enregistrée : {error}",
+  "The conversation couldn’t be saved: {error}": "La conversation n’a pas pu être enregistrée : {error}",
 };

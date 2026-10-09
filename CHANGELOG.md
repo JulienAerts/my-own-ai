@@ -7,6 +7,12 @@ Releasing: add a section for the new version at the top (`## 0.20.0 — YYYY-MM-
 push the tag (see `docs/RELEASING.md`). The release page and the update the app offers
 show that section; a tag without one doesn't build.
 
+## 0.21.1 — 2026-10-09
+
+- Saving a conversation as Markdown, and saving a backup, now work in the desktop and Android apps:
+  they open the system's "Save as" dialog (they did nothing before; the website was fine).
+- The README is up to date, with the web demo at my-own-ai.app and new screenshots.
+
 ## 0.21.0 — 2026-10-09
 
 - Search finds words inside your conversations, not just their titles, ignoring accents and

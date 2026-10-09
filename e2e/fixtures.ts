@@ -12,9 +12,11 @@ interface Options {
   lang?: 'en' | 'fr';
   /** Start in the chat (default) or go through the normal start-up. */
   chat?: boolean;
+  /** The model shown as loaded (any id from src/models.ts). */
+  model?: string;
 }
 
-export async function openApp(page: Page, { replies = [], lang, chat = true }: Options = {}) {
+export async function openApp(page: Page, { replies = [], lang, chat = true, model = MODEL }: Options = {}) {
   await page.addInitScript(({ replies, lang, chat, model }) => {
     if (lang) localStorage.setItem('my-own-ai.language', lang);
     const queue = [...replies];
@@ -40,7 +42,7 @@ export async function openApp(page: Page, { replies = [], lang, chat = true }: O
     // Anything else the app asks the engine resolves to nothing.
     w.__E2E_ENGINE__ = new Proxy(known, { get: (t, k) => (k in t ? t[k as string] : async () => undefined) });
     if (chat) w.__E2E_BOOT__ = { modelId: model };
-  }, { replies, lang, chat, model: MODEL });
+  }, { replies, lang, chat, model });
   await page.goto('/');
   if (chat) await page.locator('textarea').first().waitFor();
 }

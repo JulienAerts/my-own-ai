@@ -40,6 +40,7 @@ pub fn run() {
       files::fs_read,
       files::fs_write,
       files::fs_exists,
+      files::save_as,
       whisper::whisper_installed,
       whisper::install_whisper,
       whisper::remove_whisper,

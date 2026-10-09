@@ -134,7 +134,7 @@ export function HistoryPanel({ open, onClose, onClosed, currentId, busy, onOpen,
             items={[
               { label: t('Rename'), run: () => setRenaming(c.id) },
               { label: c.pinned ? t('Unpin') : t('Pin to the top'), run: () => pin(c) },
-              { label: t('Save as Markdown'), run: () => exportMarkdown(c) },
+              { label: t('Save as Markdown'), run: () => exportMarkdown(c).catch((e) => alert(t('The conversation couldn’t be saved: {error}', { error: e instanceof Error ? e.message : String(e) }))) },
               { label: t('Delete'), run: () => remove(c), danger: true, disabled: busy && c.id === currentId },
             ]}
           />

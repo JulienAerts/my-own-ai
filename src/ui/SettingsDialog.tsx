@@ -386,7 +386,14 @@ function AppTab({ onDeleteAllChats }: { onDeleteAllChats?: () => void }) {
               : t('Conversations are stored only in this browser. Open them from the history button in the chat header.')}
           </p>
           <div class="row">
-            <button class="btn btn-sm" disabled={!chatCount} onClick={async () => { const n = await exportAll(); setBackupMsg({ ok: true, text: tn(n, 'Saved a backup of {n} conversation.', 'Saved a backup of {n} conversations.') }); }}>
+            <button class="btn btn-sm" disabled={!chatCount} onClick={async () => {
+              try {
+                const n = await exportAll();
+                if (n !== null) setBackupMsg({ ok: true, text: tn(n, 'Saved a backup of {n} conversation.', 'Saved a backup of {n} conversations.') });
+              } catch (e) {
+                setBackupMsg({ ok: false, text: t('The backup couldn’t be saved: {error}', { error: e instanceof Error ? e.message : String(e) }) });
+              }
+            }}>
               <DownloadIcon /> {t('Export all')}
             </button>
             <button class="btn btn-sm" onClick={() => fileInput.current?.click()}>{t('Import…')}</button>

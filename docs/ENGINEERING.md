@@ -796,6 +796,10 @@ before and isn't stored.
   memories), and conversation starters.
 - **Prompt**: `You are "<name>", an assistant that runs entirely on the user's device`,
   then "Your role: …", then the user's own instructions (Settings → App), memories, tools.
+- **Saving files** (`saveFile` in `src/backup.ts`: a conversation as Markdown, a backup): a download link on
+  the website; the apps' web views ignore those, so the desktop app opens the save dialog from Rust
+  (`save_as` in `src-tauri/src/files.rs`, which writes where the user chose: the page never names a path)
+  and the Android app uses its "create document" picker (`SaveFilePlugin.java`).
 - **Managing conversations**: `ConversationMeta` has `pinned` and `renamed` (a title the user set;
   `saveChat` keeps both, backups carry them; an empty name goes back to the automatic title).
   Search (`src/search.ts`) loads every conversation's messages once per opening of the panel and

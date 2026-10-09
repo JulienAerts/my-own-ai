@@ -128,3 +128,22 @@ pub fn fs_write(root: String, path: String, content: String, overwrite: bool) ->
 pub fn fs_exists(root: String, path: String) -> Result<bool, String> {
     Ok(inside(&root, &path)?.exists())
 }
+
+/// "Save as…": the system's save dialog, then the file is written where the user chose.
+/// The dialog runs here, not in the page, so the page can't pick a path itself.
+/// `None` when the user cancels; otherwise the path written.
+#[tauri::command]
+pub async fn save_as(app: tauri::AppHandle, name: String, contents: String) -> Result<Option<String>, String> {
+    use tauri_plugin_dialog::DialogExt;
+    let ext = Path::new(&name).extension().and_then(|e| e.to_str()).unwrap_or("txt").to_string();
+    let picked = app
+        .dialog()
+        .file()
+        .set_file_name(&name)
+        .add_filter(ext.to_uppercase(), &[ext.as_str()])
+        .blocking_save_file();
+    let Some(picked) = picked else { return Ok(None) };
+    let path = picked.into_path().map_err(|e| e.to_string())?;
+    fs::write(&path, contents).map_err(|e| format!("Couldn't save {}: {e}", path.display()))?;
+    Ok(Some(path.to_string_lossy().into_owned()))
+}

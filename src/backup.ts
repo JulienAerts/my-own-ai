@@ -13,6 +13,7 @@ const toBase64 = (buf: ArrayBuffer) => {
   return btoa(s);
 };
 const fromBase64 = (b64: string) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)).buffer as ArrayBuffer;
+import { isAndroidApp, isDesktopApp } from './native';
 import { getSetting, listConversations, loadChat, saveChat, setSetting, type ConversationMeta } from './db';
 import { t } from './i18n/i18n';
 
@@ -32,7 +33,31 @@ interface Backup {
   instructions?: string;
 }
 
-export function download(name: string, content: string, type: string): void {
+type SaveFilePlugin = { save(o: { name: string; mime: string; text: string }): Promise<{ saved: boolean }> };
+let androidSave: SaveFilePlugin | null = null;
+
+/**
+ * Save a text file: a download on the website; in the apps, whose web views ignore downloads,
+ * the system's "Save as…" (desktop: src-tauri/src/files.rs; Android: SaveFilePlugin.java).
+ * False when the user cancels.
+ */
+export async function saveFile(name: string, content: string, type: string): Promise<boolean> {
+  if (isDesktopApp) {
+    const { invoke } = await import('@tauri-apps/api/core');
+    return (await invoke<string | null>('save_as', { name, contents: content })) !== null;
+  }
+  if (isAndroidApp) {
+    if (!androidSave) {
+      const { registerPlugin } = await import('@capacitor/core');
+      androidSave = registerPlugin<SaveFilePlugin>('SaveFile');
+    }
+    return (await androidSave.save({ name, mime: type, text: content })).saved;
+  }
+  download(name, content, type);
+  return true;
+}
+
+function download(name: string, content: string, type: string): void {
   const url = URL.createObjectURL(new Blob([content], { type }));
   const a = Object.assign(document.createElement('a'), { href: url, download: name });
   document.body.append(a);
@@ -43,7 +68,8 @@ export function download(name: string, content: string, type: string): void {
 
 const stamp = () => new Date().toISOString().slice(0, 10);
 
-export async function exportAll(): Promise<number> {
+/** Save a backup of everything; the number of conversations in it, or null if cancelled. */
+export async function exportAll(): Promise<number | null> {
   const metas = await listConversations();
   const backup: Backup = {
     format: FORMAT,
@@ -55,8 +81,8 @@ export async function exportAll(): Promise<number> {
     memories: (await listMemories()).map(({ text, pinned, auto, assistantId, createdAt }) => ({ text, pinned, auto, assistantId, createdAt })),
     instructions: (await getSetting('instructions')) ?? '',
   };
-  download(`my-own-ai-backup-${stamp()}.json`, JSON.stringify(backup, null, 1), 'application/json');
-  return metas.length;
+  const saved = await saveFile(`my-own-ai-backup-${stamp()}.json`, JSON.stringify(backup, null, 1), 'application/json');
+  return saved ? metas.length : null;
 }
 
 function validEntry(e: unknown): e is ChatEntry {
@@ -150,8 +176,8 @@ export async function importBackup(file: File): Promise<ImportResult> {
   return result;
 }
 
-/** One conversation as readable Markdown. */
-export async function exportMarkdown(meta: ConversationMeta): Promise<void> {
+/** One conversation as readable Markdown, saved as a .md file (false if cancelled). */
+export async function exportMarkdown(meta: ConversationMeta): Promise<boolean> {
   const entries = await loadChat(meta.id);
   const lines = [`# ${meta.title}`, '', `_${new Date(meta.createdAt).toLocaleString()}, exported from My Own AI_`, ''];
   for (const e of entries) {
@@ -163,5 +189,5 @@ export async function exportMarkdown(meta: ConversationMeta): Promise<void> {
     else lines.push(`> 🔧 \`${e.name}(${Object.entries(e.args).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ')})\``, `> ${e.result.replace(/\n/g, '\n> ')}`, '');
   }
   const slug = meta.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'conversation';
-  download(`${slug}.md`, lines.join('\n'), 'text/markdown');
+  return saveFile(`${slug}.md`, lines.join('\n'), 'text/markdown');
 }
