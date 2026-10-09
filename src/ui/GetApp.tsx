@@ -1,9 +1,9 @@
 import { useState } from 'preact/hooks';
-import { desktopOffer, downloadDesktopApp, RELEASES_URL, type DesktopOS, type Installer } from '../getapp';
+import { appOffer, downloadApp, RELEASES_URL, type AppOS, type Installer } from '../getapp';
 import { t } from '../i18n/i18n';
 import { fmtBytes } from './format';
 
-const OS_NAME: Record<DesktopOS, string> = { windows: 'Windows', mac: 'Mac', linux: 'Linux' };
+const OS_NAME: Record<AppOS, string> = { windows: 'Windows', mac: 'Mac', linux: 'Linux', android: 'Android' };
 const DISMISSED = 'my-own-ai.desktopOfferDismissed';
 const VISITS = 'my-own-ai.visits';
 
@@ -24,18 +24,19 @@ function dismissed(): boolean {
   }
 }
 
-/** What opening the installer takes, per system (unsigned app, for now). */
-function firstOpen(os: DesktopOS): string {
+/** What opening the installer takes, per system (the desktop apps aren't notarized or code-signed yet). */
+function firstOpen(os: AppOS): string {
+  if (os === 'android') return t('Open the downloaded file. If Android asks, allow installs from your browser, then tap Install (if Play Protect warns about an unknown app: More details → Install anyway).');
   if (os === 'windows') return t('Open it when it’s downloaded. If Windows warns about an unknown app: More info → Run anyway.');
   if (os === 'mac') return t('Open it, drag My Own AI to Applications, then the first time right-click the app → Open.');
   return t('Make it executable (Properties → Permissions, or chmod +x), then open it.');
 }
 
-function DownloadButton({ os, primary = true }: { os: DesktopOS; primary?: boolean }) {
+function DownloadButton({ os, primary = true }: { os: AppOS; primary?: boolean }) {
   const [state, setState] = useState<'idle' | 'busy' | Installer | 'page'>('idle');
   async function go() {
     setState('busy');
-    setState((await downloadDesktopApp(os)) ?? 'page');
+    setState((await downloadApp(os)) ?? 'page');
   }
   return (
     <>
@@ -52,8 +53,16 @@ function DownloadButton({ os, primary = true }: { os: DesktopOS; primary?: boole
   );
 }
 
-/** What the desktop app adds, in a few words. */
-function Benefits({ os }: { os: DesktopOS }) {
+/** What the app adds, in a few words. */
+function Benefits({ os }: { os: AppOS }) {
+  if (os === 'android') {
+    return (
+      <ul class="small get-app-list">
+        <li>{t('Web search and page reading that work on every site (browsers are blocked by many).')}</li>
+        <li>{t('Everything else as here, still private: your conversations stay on your phone.')}</li>
+      </ul>
+    );
+  }
   return (
     <ul class="small get-app-list">
       <li>{t('Bigger, faster models on your graphics card (up to 32B), with long conversations.')}</li>
@@ -65,15 +74,16 @@ function Benefits({ os }: { os: DesktopOS }) {
 }
 
 /**
- * The desktop app, offered on the website to visitors on Windows, Mac or Linux.
+ * The app, offered on the website to visitors on Windows, Mac, Linux or Android.
  *  - section: in Settings → App, always;
  *  - card: on the empty chat screen, from the third visit, until dismissed;
- *  - line: a sentence where the browser falls short (the model list).
+ *  - line: a sentence where the browser falls short (the model list; computers only:
+ *    the Android app runs the same models).
  */
-export function GetDesktopApp({ variant }: { variant: 'section' | 'card' | 'line' }) {
-  const os = desktopOffer();
+export function GetApp({ variant }: { variant: 'section' | 'card' | 'line' }) {
+  const os = appOffer();
   const [hidden, setHidden] = useState(() => variant === 'card' && (visits < 3 || dismissed()));
-  if (!os || hidden) return null;
+  if (!os || hidden || (variant === 'line' && os === 'android')) return null;
   const mac = os === 'mac' && <p class="small muted">{t('For Macs with Apple Silicon (M1 or newer).')}</p>;
   const others = <a class="small" href={RELEASES_URL} target="_blank" rel="noreferrer">{t('Other systems and versions')}</a>;
 
@@ -110,7 +120,7 @@ export function GetDesktopApp({ variant }: { variant: 'section' | 'card' | 'line
 
   return (
     <div class="section">
-      <h3>{t('Desktop app')}</h3>
+      <h3>{os === 'android' ? t('Android app') : t('Desktop app')}</h3>
       <p class="small">{t('The same assistant as an app for {os}, with more it can do:', { os: OS_NAME[os] })}</p>
       <Benefits os={os} />
       {mac}

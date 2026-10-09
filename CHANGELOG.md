@@ -7,6 +7,12 @@ Releasing: add a section for the new version at the top (`## 0.20.0 — YYYY-MM-
 push the tag (see `docs/RELEASING.md`). The release page and the update the app offers
 show that section; a tag without one doesn't build.
 
+## 0.20.1 — 2026-10-09
+
+- The Android app is in each release, signed with the project's key. Phones that had a test
+  build installed: export a backup, uninstall it, install this one, then import the backup.
+- The website offers the Android app to Android visitors, with how to install it.
+
 ## 0.20.0 — 2026-10-09
 
 - The website offers the desktop app to visitors on Windows, Mac and Linux, with what it adds

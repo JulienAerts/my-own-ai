@@ -56,11 +56,14 @@ test.describe('on a Windows PC', () => {
 test.describe('on an Android phone', () => {
   test.use({ userAgent: ANDROID, viewport: { width: 390, height: 844 } });
 
-  test('no desktop app is offered', async ({ page }) => {
+  test('settings offer the Android app, and the model list doesn’t', async ({ page }) => {
     await openApp(page);
     await page.getByRole('button', { name: 'Settings' }).click();
+    await expect(page.locator('.get-app-line')).toHaveCount(0);
     await page.getByRole('tab', { name: 'App', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Storage' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Android app' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Download for Android' })).toBeVisible();
+    await expect(page.getByText('Web search and page reading that work on every site')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Desktop app' })).toHaveCount(0);
   });
 });

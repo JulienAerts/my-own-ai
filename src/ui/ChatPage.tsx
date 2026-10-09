@@ -42,7 +42,7 @@ import { startDesktop } from '../desktop/desktop';
 import { installUpdate, justUpdated, startUpdateChecks, useUpdate } from '../desktop/updates';
 import { notesFor } from '../changelog';
 import { WhatsNew } from './WhatsNew';
-import { GetDesktopApp } from './GetDesktopApp';
+import { GetApp } from './GetApp';
 import { isDesktopApp } from '../native';
 import { locale, t, tn } from '../i18n/i18n';
 import { AssistantMark } from './AssistantMark';
@@ -688,7 +688,7 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
                 <button class="suggestion" onClick={() => (s.includes('…') ? (setInput(s.replace('…', '')), inputRef.current?.focus()) : send(s))}>{s}</button>
               ))}
             </div>
-            <GetDesktopApp variant="card" />
+            <GetApp variant="card" />
           </div>
         )}
         {entries.map((e, i) => (

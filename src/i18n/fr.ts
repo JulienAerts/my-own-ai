@@ -910,4 +910,8 @@ export const FR: Record<string, string> = {
   "My Own AI for {os}": "My Own AI pour {os}",
   "Desktop app": "Application de bureau",
   "The same assistant as an app for {os}, with more it can do:": "Le même assistant en application pour {os}, qui en fait plus :",
+  "Open the downloaded file. If Android asks, allow installs from your browser, then tap Install (if Play Protect warns about an unknown app: More details → Install anyway).": "Ouvrez le fichier téléchargé. Si Android le demande, autorisez les installations depuis votre navigateur, puis touchez Installer (si Play Protect signale une application inconnue : Plus de détails → Installer quand même).",
+  "Web search and page reading that work on every site (browsers are blocked by many).": "Une recherche web et une lecture de pages qui fonctionnent sur tous les sites (beaucoup bloquent les navigateurs).",
+  "Everything else as here, still private: your conversations stay on your phone.": "Tout le reste comme ici, toujours privé : vos conversations restent sur votre téléphone.",
+  "Android app": "Application Android",
 };
