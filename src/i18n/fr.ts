@@ -889,4 +889,8 @@ export const FR: Record<string, string> = {
   "Microphone access was denied.": "L’accès au micro a été refusé.",
   "Allow the microphone when the browser asks, or in the site settings (icon left of the address bar).": "Autorisez le micro quand le navigateur le demande, ou dans les paramètres du site (icône à gauche de la barre d’adresse).",
   "Also check your system privacy settings allow this browser to use the microphone.": "Vérifiez aussi que les réglages de confidentialité du système autorisent ce navigateur à utiliser le micro.",
+  "What’s new": "Nouveautés",
+  "All changes": "Toutes les modifications",
+  "Updated to version {version}.": "Mise à jour vers la version {version} effectuée.",
+  "Dismiss": "Fermer",
 };

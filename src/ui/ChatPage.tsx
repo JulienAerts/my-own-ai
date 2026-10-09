@@ -39,7 +39,9 @@ import { folderTools, startFolders, useFolders } from '../files/workspace';
 import { imageTools } from '../native/images';
 import { nativePythonEnabled, pythonTools } from '../native/python';
 import { startDesktop } from '../desktop/desktop';
-import { installUpdate, startUpdateChecks, useUpdate } from '../desktop/updates';
+import { installUpdate, justUpdated, startUpdateChecks, useUpdate } from '../desktop/updates';
+import { notesFor } from '../changelog';
+import { WhatsNew } from './WhatsNew';
 import { isDesktopApp } from '../native';
 import { locale, t, tn } from '../i18n/i18n';
 import { AssistantMark } from './AssistantMark';
@@ -168,6 +170,9 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
     return () => document.documentElement.removeAttribute('data-busy');
   }, [running]);
   const update = useUpdate();
+  // Desktop, after an update: "Updated to version …" with what changed, once.
+  const [updatedTo, setUpdatedTo] = useState<string | null>(null);
+  useEffect(() => { justUpdated().then(setUpdatedTo, () => {}); }, []);
   // Ctrl+Alt+Space (or the tray's "New chat"): a fresh conversation, ready to type.
   const quickAsk = useRef(() => {});
   quickAsk.current = () => { if (!runningRef.current) newChat(); inputRef.current?.focus(); };
@@ -645,8 +650,15 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
         </div>
       )}
       {update.kind === 'available' && !running && (
-        <div class="toast">
+        <div class="toast with-notes">
           {t('Version {version} is available.', { version: update.version })} <button class="link" onClick={() => installUpdate()}>{t('Update and restart')}</button>
+          <WhatsNew notes={update.notes} />
+        </div>
+      )}
+      {updatedTo && update.kind !== 'available' && (
+        <div class="toast with-notes">
+          {t('Updated to version {version}.', { version: updatedTo })} <button class="link" onClick={() => setUpdatedTo(null)}>{t('Dismiss')}</button>
+          <WhatsNew items={notesFor(updatedTo)} />
         </div>
       )}
       {update.kind === 'downloading' && (

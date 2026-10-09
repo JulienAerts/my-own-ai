@@ -84,3 +84,21 @@ export async function appVersion(): Promise<string> {
   const { getVersion } = await import('@tauri-apps/api/app');
   return getVersion();
 }
+
+const LAST_RUN = 'my-own-ai.lastVersion';
+
+/**
+ * The version this run updated to, once: null on the first run, on later runs of the same
+ * version, and outside the desktop app.
+ */
+export async function justUpdated(): Promise<string | null> {
+  if (!isDesktopApp) return null;
+  const now = await appVersion();
+  try {
+    const before = localStorage.getItem(LAST_RUN);
+    localStorage.setItem(LAST_RUN, now);
+    return before && before !== now ? now : null;
+  } catch {
+    return null;
+  }
+}

@@ -66,6 +66,15 @@ jobs:
           echo "version=$v" >> "$GITHUB_OUTPUT"
           node -e "const f='src-tauri/tauri.conf.json',fs=require('fs'),c=JSON.parse(fs.readFileSync(f));c.version='$v';fs.writeFileSync(f,JSON.stringify(c,null,2))"
 
+      # What changed, from CHANGELOG.md: the release page and the update the app offers
+      # show it. A tag without a section there stops here.
+      - name: Release notes
+        id: notes
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_NAME" == desktop-v* ]]; then notes="$(node scripts/release-notes.mjs '${{ steps.version.outputs.version }}')"; else notes="Test build."; fi
+          { echo 'text<<END_OF_NOTES'; echo "$notes"; echo 'END_OF_NOTES'; } >> "$GITHUB_OUTPUT"
+
       # No signing key yet: build the installers without update files rather than fail.
       - name: Signing
         id: signing
@@ -87,7 +96,11 @@ jobs:
           # Tags become a release; a run by hand only builds (see the artifacts below).
           tagName: ${{ startsWith(github.ref, 'refs/tags/desktop-v') && github.ref_name || '' }}
           releaseName: My Own AI ${{ steps.version.outputs.version }}
+          # The app shows the part before "---" (see src/desktop/updates.ts).
           releaseBody: |
+            ${{ steps.notes.outputs.text }}
+
+            ---
             Desktop app for Windows, macOS (Apple Silicon) and Linux. Installed apps update themselves.
             - Windows: run the `-setup.exe` (SmartScreen: More info → Run anyway).
             - macOS: open the `.dmg` and drag the app to Applications; the first time, right-click it → Open.

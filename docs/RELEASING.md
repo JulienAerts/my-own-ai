@@ -5,9 +5,16 @@ Windows, macOS (Apple Silicon) and Linux and publishes a GitHub release with the
 installers and `latest.json`. Installed apps check that file at start and every six
 hours, and install a new version only if it is signed with the project's key.
 
+First add the version's section at the top of `CHANGELOG.md` (`## 0.20.0 — YYYY-MM-DD`,
+then one line per change, written for users) and push it. The build uses that section as
+the release text, which is also what the app shows under "What's new" when it offers the
+update; a tag without a section fails at the "Release notes" step. Then:
+
 ```sh
-git tag desktop-v0.17.0 && git push origin desktop-v0.17.0
+git tag desktop-v0.20.0 && git push origin desktop-v0.20.0
 ```
+
+Check a section with `node scripts/release-notes.mjs 0.20.0`.
 
 ## The update signing key (once)
 

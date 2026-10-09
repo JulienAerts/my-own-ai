@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { SHORTCUT, keepInTray, setKeepInTray, setStartsWithWindows, startsWithWindows } from '../desktop/desktop';
 import { t, tj } from '../i18n/i18n';
+import { WhatsNew } from './WhatsNew';
 import { appVersion, checkForUpdate, installUpdate, useUpdate } from '../desktop/updates';
 import { desktopOS } from '../native';
 
@@ -55,6 +56,7 @@ export function DesktopSection() {
           ? <button class="btn btn-sm btn-primary" onClick={() => installUpdate()}>{t('Update and restart')}</button>
           : <button class="btn btn-sm" disabled={update.kind === 'checking' || update.kind === 'downloading'} onClick={() => checkForUpdate()}>{t('Check now')}</button>}
       </div>
+      {update.kind === 'available' && <WhatsNew notes={update.notes} />}
       <p class="small muted">{t('New versions come from the project’s GitHub releases and are installed only if they carry its signature.')}</p>
     </div>
   );
