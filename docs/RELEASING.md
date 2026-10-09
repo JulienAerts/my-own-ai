@@ -30,6 +30,22 @@ Keep a copy of both files somewhere safe (a password manager). If the private ke
 lost, installed apps can't be updated anymore: a new key means everyone reinstalls once.
 Without the secrets the workflow still builds installers, just without update files.
 
+## The Android signing key (once)
+
+Android installs an update only if it's signed with the same key as the installed app, so this
+key must never change or be lost. It lives outside the repository, in `~/.android-signing/`:
+`my-own-ai-release.jks` (alias `my-own-ai`, valid until 2054, certificate "CN=My Own AI"), its
+password in `my-own-ai-release.password`, and the keystore as one line of base64 in
+`my-own-ai-release.jks.base64`. Repository secrets (Settings → Secrets and variables → Actions):
+
+- `ANDROID_KEYSTORE_BASE64`: the contents of `my-own-ai-release.jks.base64`;
+- `ANDROID_KEYSTORE_PASSWORD`: the contents of `my-own-ai-release.password`.
+
+Keep a copy of the `.jks` and its password somewhere safe (a password manager). With the secrets
+set, each release also carries `My.Own.AI_X.Y.Z_android.apk`, versioned from the tag. An app
+installed from a debug build (`npm run android`) has another signature: uninstall it once (export
+a backup first: uninstalling deletes its conversations), then install the release APK.
+
 ## Where updates come from
 
 `https://github.com/JulienAerts/my-own-ai/releases/latest/download/latest.json`.

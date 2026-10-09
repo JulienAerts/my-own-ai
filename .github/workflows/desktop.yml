@@ -120,3 +120,57 @@ jobs:
             src-tauri/target/**/release/bundle/appimage/*.AppImage
             src-tauri/target/**/release/bundle/deb/*.deb
           if-no-files-found: error
+
+  # The Android app, signed with the project's key, added to the same release.
+  # Needs the ANDROID_KEYSTORE_BASE64 and ANDROID_KEYSTORE_PASSWORD secrets (docs/RELEASING.md);
+  # without them this job only warns. Runs after the desktop jobs, which create the release.
+  android:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/desktop-v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Signing key
+        id: key
+        shell: bash
+        env:
+          KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "::warning::ANDROID_KEYSTORE_BASE64 is not set: no Android app in this release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "$KEY" | base64 -d > "$RUNNER_TEMP/release.jks"
+          fi
+
+      - name: Build the APK
+        if: steps.key.outputs.skip != 'true'
+        env:
+          APP_VERSION: ${{ github.ref_name }}
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          export APP_VERSION="${APP_VERSION#desktop-v}"
+          npm ci
+          npx vite build
+          npx cap sync android
+          cd android && ./gradlew assembleRelease --no-daemon -q
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/My.Own.AI_${APP_VERSION}_android.apk"
+
+      - name: Add it to the release
+        if: steps.key.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$GITHUB_REF_NAME" My.Own.AI_*_android.apk --clobber

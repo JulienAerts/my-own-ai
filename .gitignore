@@ -6,3 +6,7 @@ playwright-report
 
 # Vitest reports
 .vitest/
+
+# Signing keys never belong in the repository
+*.jks
+*.keystore

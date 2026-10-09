@@ -7,8 +7,12 @@ android {
         applicationId "ai.local.assistant"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Release builds get the version from the tag (desktop-v0.20.0 → 0.20.0, code 20000);
+        // the code must grow with each release for Android to install it as an update.
+        def appVersion = System.getenv("APP_VERSION") ?: "0.0.1"
+        def (major, minor, patch) = appVersion.tokenize('.').collect { it.replaceAll(/\D.*/, '') as int }
+        versionCode major * 1000000 + minor * 1000 + patch
+        versionName appVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +20,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Release signing: the project's key, given by the release workflow (see docs/RELEASING.md).
+    // Without it, release builds are unsigned and debug builds use the usual debug key.
+    signingConfigs {
+        release {
+            if (System.getenv("ANDROID_KEYSTORE_FILE")) {
+                storeFile file(System.getenv("ANDROID_KEYSTORE_FILE"))
+                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias "my-own-ai"
+                keyPassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         release {
+            if (System.getenv("ANDROID_KEYSTORE_FILE")) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
