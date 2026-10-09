@@ -1,0 +1,8 @@
+node_modules
+dist
+.certs
+test-results
+playwright-report
+
+# Vitest reports
+.vitest/

@@ -1,0 +1,108 @@
+# Builds the desktop app for Windows, macOS (Apple Silicon) and Linux, and
+# publishes a desktop-v* tag as a release: the installers plus latest.json,
+# which installed apps read to update themselves (src/desktop/updates.ts).
+# Updates are signed with the project's key: the TAURI_SIGNING_PRIVATE_KEY and
+# TAURI_SIGNING_PRIVATE_KEY_PASSWORD secrets. Without them the installers are
+# still built, but without update files.
+# macOS and Windows minutes count extra on private repos, so it runs only on a
+# desktop-v* tag or by hand (Actions → Desktop app → Run workflow).
+name: Desktop app
+
+on:
+  push:
+    tags: ['desktop-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write # to publish the release
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: windows
+            args: --bundles nsis
+          - os: macos-latest
+            name: macos-apple-silicon
+            args: --target aarch64-apple-darwin --bundles app,dmg
+          - os: ubuntu-22.04
+            name: linux
+            args: --bundles appimage,deb
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Linux build dependencies
+        if: matrix.name == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.name == 'macos-apple-silicon' && 'aarch64-apple-darwin' || '' }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - run: npm ci
+
+      # The version comes from the tag (desktop-v0.17.0 → 0.17.0); updates compare it.
+      - name: Version
+        id: version
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF_NAME" == desktop-v* ]]; then v="${GITHUB_REF_NAME#desktop-v}"; else v="0.0.0-${GITHUB_RUN_NUMBER}"; fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          node -e "const f='src-tauri/tauri.conf.json',fs=require('fs'),c=JSON.parse(fs.readFileSync(f));c.version='$v';fs.writeFileSync(f,JSON.stringify(c,null,2))"
+
+      # No signing key yet: build the installers without update files rather than fail.
+      - name: Signing
+        id: signing
+        shell: bash
+        env:
+          KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if [ -z "$KEY" ]; then
+            echo "args=--config '{\"bundle\":{\"createUpdaterArtifacts\":false}}'" >> "$GITHUB_OUTPUT"
+            echo "::warning::TAURI_SIGNING_PRIVATE_KEY is not set: installers are built without update files."
+          fi
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          # Tags become a release; a run by hand only builds (see the artifacts below).
+          tagName: ${{ startsWith(github.ref, 'refs/tags/desktop-v') && github.ref_name || '' }}
+          releaseName: My Own AI ${{ steps.version.outputs.version }}
+          releaseBody: |
+            Desktop app for Windows, macOS (Apple Silicon) and Linux. Installed apps update themselves.
+            - Windows: run the `-setup.exe` (SmartScreen: More info → Run anyway).
+            - macOS: open the `.dmg` and drag the app to Applications; the first time, right-click it → Open.
+            - Linux: the `.AppImage` (make it executable) or the `.deb`.
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: true
+          args: ${{ matrix.args }} ${{ steps.signing.outputs.args }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: my-own-ai-${{ matrix.name }}-${{ steps.version.outputs.version }}
+          path: |
+            src-tauri/target/**/release/bundle/nsis/*.exe
+            src-tauri/target/**/release/bundle/dmg/*.dmg
+            src-tauri/target/**/release/bundle/appimage/*.AppImage
+            src-tauri/target/**/release/bundle/deb/*.deb
+          if-no-files-found: error

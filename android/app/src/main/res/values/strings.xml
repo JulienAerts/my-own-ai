@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">My Own AI</string>
+    <string name="title_activity_main">My Own AI</string>
+    <string name="package_name">ai.local.assistant</string>
+    <string name="custom_url_scheme">ai.local.assistant</string>
+</resources>
