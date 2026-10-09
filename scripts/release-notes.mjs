@@ -3,6 +3,7 @@
 // so a release can't go out without saying what changed.
 // Usage: node scripts/release-notes.mjs 0.20.0
 import { readFileSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 export function releaseNotes(changelog, version) {
   const sections = changelog.split(/^## /m).slice(1);
@@ -10,7 +11,8 @@ export function releaseNotes(changelog, version) {
   return section ? section.slice(section.indexOf('\n') + 1).trim() : null;
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Run directly (compared as URLs: on Windows the path is D:\…, the URL file:///D:/…).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const version = process.argv[2];
   const notes = releaseNotes(readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8'), version);
   if (!notes) {

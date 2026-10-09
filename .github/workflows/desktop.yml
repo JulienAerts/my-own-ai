@@ -73,6 +73,7 @@ jobs:
         shell: bash
         run: |
           if [[ "$GITHUB_REF_NAME" == desktop-v* ]]; then notes="$(node scripts/release-notes.mjs '${{ steps.version.outputs.version }}')"; else notes="Test build."; fi
+          if [ -z "$notes" ]; then echo "::error::No release notes for this version."; exit 1; fi
           { echo 'text<<END_OF_NOTES'; echo "$notes"; echo 'END_OF_NOTES'; } >> "$GITHUB_OUTPUT"
 
       # No signing key yet: build the installers without update files rather than fail.
