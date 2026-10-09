@@ -51,9 +51,12 @@ test('a problem report has the diagnostics but not the conversation', async ({ p
   await expect(report).toHaveValue(/Version: .+\(browser, interface: en\)/);
   await expect(report).toHaveValue(/Model: Hermes-3-Llama-3.2-3B/);
   expect(await report.inputValue()).not.toContain('secret');
+  // Answered here: the real GitHub sends visitors who aren't signed in to its login page.
+  await context.route('https://github.com/**', (route) => route.fulfill({ contentType: 'text/html', body: 'GitHub' }));
   const [github] = await Promise.all([context.waitForEvent('page'), page.getByRole('button', { name: 'Open on GitHub' }).click()]);
-  expect(github.url()).toContain('/issues/new?');
+  await github.waitForURL(/\/my-own-ai\/issues\/new\?/);
   expect(decodeURIComponent(github.url())).toContain('Diagnostics');
+  expect(decodeURIComponent(github.url())).not.toContain('secret');
 });
 
 test('the logo and background can be personalised', async ({ page }) => {
