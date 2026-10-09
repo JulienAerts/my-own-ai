@@ -7,6 +7,14 @@ Releasing: add a section for the new version at the top (`## 0.20.0 — YYYY-MM-
 push the tag (see `docs/RELEASING.md`). The release page and the update the app offers
 show that section; a tag without one doesn't build.
 
+## 0.22.0 — 2026-10-09
+
+- Accessibility: screen readers now hear each answer once, when it's complete (they used to
+  repeat it while it was being written), plus memory updates and errors.
+- Better contrast for green labels ("In use", "Current") and for code colours in light mode.
+- "Back to the latest message" no longer animates when the system asks to reduce motion.
+- Every main screen is checked automatically for accessibility (WCAG 2.2 AA) in both themes.
+
 ## 0.21.1 — 2026-10-09
 
 - Saving a conversation as Markdown, and saving a backup, now work in the desktop and Android apps:

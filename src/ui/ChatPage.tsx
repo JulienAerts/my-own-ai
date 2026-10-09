@@ -249,10 +249,11 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
   function toLatest() {
     stick.current = true;
     setAwayFromEnd(false);
-    bottom.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    bottom.current?.scrollIntoView({ block: 'end', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   }
   // A search result opens its conversation on the matching message, highlighted for a moment.
   const [focusTs, setFocusTs] = useState<number | null>(null);
+  const [announce, setAnnounce] = useState('');
   const focusComposer = useRef(false);
   useEffect(() => {
     if (focusTs !== null) {
@@ -306,6 +307,7 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
     let speech: SpeechStream | null = null;
     setRunning(true);
     runningRef.current = true;
+    setAnnounce(t('Writing an answer…'));
     signal.current = { stopped: false };
     const question = { role: 'user', text, ts: Date.now(), ...(image && { image: image.url, imageTokens: image.tokens }) } as Extract<ChatEntry, { role: 'user' }>;
     // Regenerating or editing keeps what it replaces as an earlier version of the turn.
@@ -428,6 +430,7 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
             (speech ?? startSpeaking(String(entry.ts))).end(entry.text, String(entry.ts));
           }
           if (entry.role === 'assistant' && !entry.interrupted && !entry.notice) answered = entry.text;
+          if (entry.role === 'assistant') setAnnounce(plainText(entry.text));
           transcript = [...transcript, entry];
           setEntries(transcript);
           saveChat(id, transcript, assistantId);
@@ -451,6 +454,7 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
             }];
             setEntries(transcript);
             saveChat(id, transcript, assistantId);
+            setAnnounce(t('Memory updated: {facts}', { facts: saved.map((m) => m.text).join(' · ') }));
           }
         } catch (e) {
           if (isGpuFailure(e)) throw e;
@@ -691,7 +695,9 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
         </div>
       )}
 
-      <main class="messages" aria-live="polite" onScroll={onScroll}>
+      {/* Screen readers: the finished answer, once (a live message list would repeat it as it streams). */}
+      <div class="sr-only" aria-live="polite" aria-atomic="true">{announce}</div>
+      <main class="messages" onScroll={onScroll}>
         {empty && (
           <div class="hello">
             <AssistantMark a={assistant} size={72} />
@@ -743,7 +749,7 @@ export function ChatPage({ modelId, model, contextWindow }: { modelId: string; m
           />
         )}
         {error && (
-          <div class="alert small">
+          <div class="alert small" role="alert">
             {error}
             <GpuReport key={error} />
           </div>
@@ -936,6 +942,20 @@ function UserMessage({ text, image, busy, onEdit, versions }: { text: string; im
       </div>
     </div>
   );
+}
+
+/** An answer as screen readers should hear it: without Markdown marks or code fences. */
+function plainText(md: string): string {
+  return md
+    .replace(/```[\s\S]*?```/g, ` ${t('(code)')} `)
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/^#{1,6}\s+|^\s*[-*+]\s+|^\s*>\s?/gm, '')
+    .replace(/[*_~]{1,3}([^*_~]+)[*_~]{1,3}/g, '$1')
+    .replace(/\|/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 4000);
 }
 
 function Entry({ e, versions, speaking, busy, last, onRegenerate, onEdit, onUndoMemory, onManageMemory }: {

@@ -17,6 +17,7 @@
   --accent-text: #ffffff;
   --grad: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
   --ok: #1f9d5b;
+  --ok-fg: #106b3a; /* green text on light backgrounds (4.5:1 or more) */
   --ok-soft: rgba(31, 157, 91, 0.12);
   --danger: #dc3545;
   --danger-soft: rgba(220, 53, 69, 0.1);
@@ -30,8 +31,8 @@
   --font-text: var(--font);
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --code-keyword: #8b3fd9;
-  --code-string: #1a7f37;
-  --code-number: #b35900;
+  --code-string: #167030;
+  --code-number: #9c4c00;
   --code-title: #2457c5;
   --code-type: #a3366b;
   /* The accent as text (links, labels): readable on the page whatever the theme colour. */
@@ -63,6 +64,7 @@
     --accent-soft: rgba(123, 123, 255, 0.14);
     --accent-text: #ffffff;
     --ok: #3ccf85;
+    --ok-fg: #3ccf85;
     --ok-soft: rgba(60, 207, 133, 0.14);
     --danger: #ff6b78;
     --danger-soft: rgba(255, 107, 120, 0.12);
@@ -93,6 +95,7 @@
     --accent-soft: rgba(123, 123, 255, 0.14);
     --accent-text: #ffffff;
     --ok: #3ccf85;
+    --ok-fg: #3ccf85;
     --ok-soft: rgba(60, 207, 133, 0.14);
     --danger: #ff6b78;
     --danger-soft: rgba(255, 107, 120, 0.12);
@@ -223,6 +226,8 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .icon-btn:not(:disabled):hover { background: var(--surface-2); color: var(--text); }
 .link { border: 0; background: none; padding: 0; color: var(--accent-fg); font-weight: 600; text-decoration: underline; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Read by screen readers, not shown. */
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 
 /* ---------- Pills, notices ---------- */
 .pill {
@@ -230,9 +235,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   padding: 2px 9px; border-radius: 999px; white-space: nowrap; vertical-align: middle;
 }
 .pill-accent { background: var(--accent-soft); color: var(--accent-fg); }
-.pill-ok { background: var(--ok-soft); color: var(--ok); }
+.pill-ok { background: var(--ok-soft); color: var(--ok-fg); }
 .notice { background: var(--warn-bg); color: var(--warn-text); padding: 10px 12px; border-radius: 12px; font-size: 0.88rem; }
-.notice.ok { background: var(--ok-soft); color: var(--ok); }
+.notice.ok { background: var(--ok-soft); color: var(--ok-fg); }
 .alert { background: var(--danger-soft); color: var(--danger); padding: 10px 12px; border-radius: 12px; overflow-wrap: anywhere; }
 .kv { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; font-size: 0.9rem; }
 .kv dt { color: var(--muted); }
@@ -293,7 +298,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   flex: 1; font-size: 0.72rem; font-weight: 600; color: var(--muted); text-align: center;
   padding-top: 8px; border-top: 3px solid var(--surface-2); transition: color 0.3s, border-color 0.3s;
 }
-.steps li.done { color: var(--ok); border-color: var(--ok); }
+.steps li.done { color: var(--ok-fg); border-color: var(--ok); }
 .steps li.active { color: var(--accent); border-color: var(--accent); }
 .reasons { margin: 0; padding-left: 20px; color: var(--muted); font-size: 0.9rem; }
 
@@ -571,7 +576,7 @@ details.section summary h3 { display: inline; }
 .lib-choice .check { margin: 0; }
 .pill { background: var(--surface-2); color: var(--muted); }
 .pill-accent { background: var(--accent-soft); color: var(--accent-fg); }
-.pill-ok { background: var(--ok-soft); color: var(--ok); }
+.pill-ok { background: var(--ok-soft); color: var(--ok-fg); }
 
 /* ---------- History drawer ---------- */
 @media (min-width: 601px) {

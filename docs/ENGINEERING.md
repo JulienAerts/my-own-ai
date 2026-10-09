@@ -796,6 +796,13 @@ before and isn't stored.
   memories), and conversation starters.
 - **Prompt**: `You are "<name>", an assistant that runs entirely on the user's device`,
   then "Your role: …", then the user's own instructions (Settings → App), memories, tools.
+- **Accessibility**: `e2e/accessibility.spec.ts` runs axe-core (WCAG 2.2 A/AA) on the chat, the
+  history, every settings tab, the first-run welcome and the assistants, in light and dark (after
+  the entrance animations, which fade colours in). The message list is not a live region: a hidden
+  announcer (`.sr-only`, `aria-live="polite"`) says "Writing an answer…", then the finished answer
+  as plain text (Markdown marks removed, code blocks as "(code)"), then memory updates; errors use
+  `role="alert"`. Animations stop under "reduce motion" (a global rule, and no smooth scrolling).
+  Green text uses `--ok-fg`, darker than `--ok` in light mode.
 - **Saving files** (`saveFile` in `src/backup.ts`: a conversation as Markdown, a backup): a download link on
   the website; the apps' web views ignore those, so the desktop app opens the save dialog from Rust
   (`save_as` in `src-tauri/src/files.rs`, which writes where the user chose: the page never names a path)
