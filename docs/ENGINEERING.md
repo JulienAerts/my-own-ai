@@ -129,6 +129,19 @@ the repository's Actions secrets, see `docs/RELEASING.md`). `src/desktop/updates
 15 s after start and every six hours; the chat shows "Version X is available · Update and
 restart" (never during an answer), Settings → App → Desktop has the version and "Check now".
 On Windows the installer runs in passive mode; then `tauri-plugin-process` relaunches the app.
+What's new: the release text is the version's `CHANGELOG.md` section (`scripts/release-notes.mjs`,
+which fails the build when there is none); the app shows it under "What's new" when it offers an
+update (the part before `---`; install help follows), and once after updating (`justUpdated`,
+from the bundled changelog).
+
+Getting the app from the website (`src/getapp.ts`, `src/ui/GetDesktopApp.tsx`): on Windows, Mac
+and Linux browsers (not phones, iPads asking for the desktop site, Chromebooks, or the apps), the
+site offers the desktop app: always in Settings → App, as a line in the model list (above all when
+no model runs in the browser), and as a card on the empty chat from the third visit until
+dismissed. Installer names carry the version, so the click asks GitHub's API for the latest
+release's files (CORS allowed; listed in Settings → Network) and starts the matching download
+(`_x64-setup.exe`, `_aarch64.dmg`, `_amd64.AppImage`), or opens the releases page if that fails.
+Macs are offered the Apple Silicon build with a note: browsers don't reliably tell the chip.
 
 ### Native engine on the desktop (llama.cpp)
 

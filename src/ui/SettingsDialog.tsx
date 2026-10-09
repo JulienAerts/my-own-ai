@@ -19,6 +19,7 @@ import { issueUrl, reportBody } from '../report';
 import { openExternal } from '../desktop/links';
 import { CheckIcon, CloseIcon } from './icons';
 import { InstallApp } from './InstallApp';
+import { GetDesktopApp } from './GetDesktopApp';
 import { SpeechCard } from './SpeechCard';
 import { ReadAloudCard } from './ReadAloudCard';
 import { GpuReport } from './GpuReport';
@@ -213,13 +214,14 @@ function ModelTab({ onClose }: { onClose: () => void }) {
     start(id);
   }
 
-  if (!choices.length) return <p class="muted">{t('No models can run in this browser.')}</p>;
+  if (!choices.length) return <><p class="muted">{t('No models can run in this browser.')}</p><GetDesktopApp variant="line" /></>;
 
   return (
     <>
       <p class="muted small">
         {t('Bigger models answer better but download more and need more GPU memory. Each is downloaded once and kept on this device.')}
       </p>
+      <GetDesktopApp variant="line" />
       {nativeModels().length > 0 && nativeGpu && (
         <p class="notice ok small">
           {tj('Your {gpu} ({gb} GB) runs the {label} models natively: bigger and faster than in a browser. The first one also downloads the llama.cpp engine ({size}, once).', {
@@ -407,6 +409,8 @@ function AppTab({ onDeleteAllChats }: { onDeleteAllChats?: () => void }) {
           <p class="small muted">{t('Use your browser menu: “Install app” or “Add to Home Screen”.')}</p>
         )}
       </div>
+
+      <GetDesktopApp variant="section" />
 
       <div class="section">
         <h3>{t('Storage')}</h3>

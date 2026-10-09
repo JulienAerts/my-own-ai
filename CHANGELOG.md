@@ -7,6 +7,13 @@ Releasing: add a section for the new version at the top (`## 0.20.0 — YYYY-MM-
 push the tag (see `docs/RELEASING.md`). The release page and the update the app offers
 show that section; a tag without one doesn't build.
 
+## 0.20.0 — 2026-10-09
+
+- The website offers the desktop app to visitors on Windows, Mac and Linux, with what it adds
+  (bigger, faster models on the graphics card, folders, connectors…): in Settings → App, in the
+  model list, and once on the chat screen. One click downloads the right installer.
+- What's new in each update is now shown in the app on Windows too.
+
 ## 0.19.2 — 2026-10-09
 
 - What's new: when an update is available, the app shows what changed. Every version's
