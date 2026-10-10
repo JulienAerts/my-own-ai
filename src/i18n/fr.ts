@@ -544,7 +544,6 @@ export const FR: Record<string, string> = {
   "Most tokens per answer (a token is about ¾ of a word). Auto: 512. At most half of the context.": "Nombre maximal de jetons par réponse (un jeton vaut environ ¾ de mot). Auto : 512. Au plus la moitié du contexte.",
   "Context size": "Taille du contexte",
   "How much of the conversation the model keeps in mind; beyond it, older messages are summarized. Bigger uses more GPU memory and makes long prompts slower, and local models recall less well far back in a very long context. Changing it reloads the model. If loading fails, go back to Auto.": "La part de la conversation que le modèle garde en tête ; au-delà, les anciens messages sont résumés. Plus grand, cela utilise plus de mémoire GPU et ralentit les longs prompts, et les modèles locaux se souviennent moins bien de ce qui est loin dans un très long contexte. Changer ce réglage recharge le modèle. Si le chargement échoue, revenez en Auto.",
-  "Fixed on phones: a longer prompt needs a bigger GPU buffer than phones allow.": "Fixe sur téléphone : un prompt plus long demande un tampon GPU plus grand que ce que les téléphones permettent.",
   // ui/GpuReport.tsx
   "GPU diagnostics ({summary})": "Diagnostic GPU ({summary})",
   "no errors": "aucune erreur",
@@ -927,4 +926,6 @@ export const FR: Record<string, string> = {
   "Memory updated: {facts}": "Mémoire mise à jour : {facts}",
   "Writing an answer…": "Rédaction de la réponse…",
   "(code)": "(code)",
+  "Fixed at 2,048 tokens on phones: this model reads prompts in blocks larger than phones’ GPUs allow.": "Fixée à 2 048 tokens sur téléphone : ce modèle lit les messages par blocs plus grands que ce que les GPU des téléphones permettent.",
+  "Fixed for this model on this device.": "Fixée pour ce modèle sur cet appareil.",
 };

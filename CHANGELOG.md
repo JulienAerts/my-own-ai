@@ -7,6 +7,14 @@ Releasing: add a section for the new version at the top (`## 0.20.0 — YYYY-MM-
 push the tag (see `docs/RELEASING.md`). The release page and the update the app offers
 show that section; a tag without one doesn't build.
 
+## 0.23.0 — 2026-10-10
+
+- Phones: text models are no longer limited to 2,048 tokens of context. Each model gets what its
+  memory allows: 8k for Qwen2.5 and Llama 3.2 1B, 4k for Qwen3 and Hermes 3 (up to 8k in
+  Settings → Model → Generation). Two to four times more room for documents, web pages and the
+  conversation. The image model stays at 2,048 tokens. If a phone can't load a model with the
+  larger context, it loads it at 2,048 tokens as before.
+
 ## 0.22.0 — 2026-10-09
 
 - Accessibility: screen readers now hear each answer once, when it's complete (they used to

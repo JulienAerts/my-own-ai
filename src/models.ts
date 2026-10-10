@@ -43,6 +43,11 @@ export interface ModelInfo {
   /** Longest context the model was trained for (tokens); caps the context-size setting. */
   maxContext?: number;
   /**
+   * Conversation memory (KV cache) per token of context, with 16-bit values: layers × 2 (keys and
+   * values) × KV heads × head size × 2 bytes. Sets which context sizes fit on phones.
+   */
+  kv?: { layers: number; perToken: number };
+  /**
    * Largest working (activation) buffer while answering, when it's larger than
    * any weight tensor. Model libraries reserve it for a full prefill chunk
    * whatever the prompt length: Phi-3.5 vision's library is compiled with
@@ -66,6 +71,7 @@ export interface ModelInfo {
 const MODELS = {
   bench: {
     family: 'SmolLM2-360M-Instruct',
+    kv: { layers: 32, perToken: 40_960 },
     maxContext: 8192,
     displayName: 'SmolLM2 360M Instruct',
     params: '360M',
@@ -77,6 +83,7 @@ const MODELS = {
   },
   tinyIOS: {
     family: 'Qwen2.5-0.5B-Instruct',
+    kv: { layers: 24, perToken: 12_288 },
     maxContext: 32768,
     displayName: 'Qwen2.5 0.5B Instruct',
     params: '0.5B',
@@ -88,6 +95,7 @@ const MODELS = {
   },
   llama1b: {
     family: 'Llama-3.2-1B-Instruct',
+    kv: { layers: 16, perToken: 32_768 },
     maxContext: 131072,
     displayName: 'Llama 3.2 1B Instruct',
     params: '1B',
@@ -99,6 +107,7 @@ const MODELS = {
   },
   tiny: {
     family: 'Qwen2.5-1.5B-Instruct',
+    kv: { layers: 28, perToken: 28_672 },
     maxContext: 32768,
     displayName: 'Qwen2.5 1.5B Instruct',
     params: '1.5B',
@@ -110,6 +119,7 @@ const MODELS = {
   },
   small: {
     family: 'Hermes-3-Llama-3.2-3B',
+    kv: { layers: 28, perToken: 114_688 },
     maxContext: 131072,
     displayName: 'Hermes 3 (Llama 3.2 3B)',
     params: '3B',
@@ -121,6 +131,7 @@ const MODELS = {
   },
   vision: {
     family: 'Phi-3.5-vision-instruct',
+    kv: { layers: 32, perToken: 393_216 },
     maxContext: 131072,
     displayName: `Phi-3.5 vision (${t('images')})`,
     params: '4.2B',
@@ -134,6 +145,7 @@ const MODELS = {
   },
   qwen3Tiny: {
     family: 'Qwen3-0.6B',
+    kv: { layers: 28, perToken: 114_688 },
     maxContext: 40960,
     displayName: `Qwen3 0.6B (${t('thinks')})`,
     params: '0.6B',
@@ -146,6 +158,7 @@ const MODELS = {
   },
   qwen3Small: {
     family: 'Qwen3-1.7B',
+    kv: { layers: 28, perToken: 114_688 },
     maxContext: 40960,
     displayName: `Qwen3 1.7B (${t('thinks')})`,
     params: '1.7B',
@@ -158,6 +171,7 @@ const MODELS = {
   },
   qwen3Mid: {
     family: 'Qwen3-4B',
+    kv: { layers: 36, perToken: 147_456 },
     maxContext: 40960,
     displayName: `Qwen3 4B (${t('thinks')})`,
     params: '4B',
@@ -170,6 +184,7 @@ const MODELS = {
   },
   qwen3Large: {
     family: 'Qwen3-8B',
+    kv: { layers: 36, perToken: 147_456 },
     maxContext: 40960,
     displayName: `Qwen3 8B (${t('thinks')})`,
     params: '8B',
@@ -182,6 +197,7 @@ const MODELS = {
   },
   phi35: {
     family: 'Phi-3.5-mini-instruct',
+    kv: { layers: 32, perToken: 393_216 },
     maxContext: 131072,
     displayName: 'Phi-3.5 mini (3.8B)',
     params: '3.8B',
@@ -193,6 +209,7 @@ const MODELS = {
   },
   medium: {
     family: 'Hermes-3-Llama-3.1-8B',
+    kv: { layers: 32, perToken: 131_072 },
     maxContext: 131072,
     displayName: 'Hermes 3 (Llama 3.1 8B)',
     params: '8B',

@@ -749,6 +749,19 @@ What the assistant remembers about the user (`src/memory/`), kept in IndexedDB
   initialize samplers"), so `src/native/llama.ts` converts JSON schemas to GBNF itself
   (`schemaGrammar`) and sends `grammar`, with the thinking switch as for any request.
 
+### Context size on phones
+
+Phones refuse any GPU buffer over 128 MiB (maxStorageBufferBindingSize). Android used to load every
+model at 2048 tokens because of the vision model, whose library prefills 2,048 tokens at a time
+(144 MiB of activations). Text models' libraries prefill 1,024 tokens at a time (~72 MiB) whatever the
+context; what grows with the context is the KV cache, one buffer per layer. So phones now pick per
+model (`phoneContexts`, `phoneAutoContext` in `src/boot.ts`, from `ModelInfo.kv`: layers and bytes per
+token): sizes whose per-layer buffer stays under 96 MiB and whose cache stays under 1 GiB are offered,
+and Auto takes the largest within 640 MiB (8k for Qwen2.5 and Llama 3.2 1B, 4k for Qwen3 and Hermes 3;
+32-bit builds count double). The vision model stays at 2048. If loading at the larger size fails, it
+reloads at 2048. Checked in headless Chromium (SwiftShader) with the device's binding limit forced to
+128 MiB: Qwen3 0.6B loads at 8192, and Qwen2.5 0.5B at 8192 answers a 2,442-token prompt with no GPU error.
+
 ### Tools per turn on small contexts
 
 With 13 tools, the system prompt was ~1,130 tokens (JSON dialect) or ~1,630 (Qwen3/Hermes),

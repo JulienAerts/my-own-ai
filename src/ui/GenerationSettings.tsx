@@ -11,7 +11,7 @@ export function GenerationSettings({ modelId, model, onReload }: { modelId: stri
   const gen = useGenSettings(modelId);
   const boot = useBoot();
   const loadedContext = boot.kind === 'ready' ? boot.contextWindow : undefined;
-  const contexts = contextChoices(model);
+  const contexts = contextChoices(model, modelId);
   const context = loadedContext ?? 4096;
   const lengths = LENGTHS.filter((n) => n <= context / 2);
   const custom = Object.keys(gen).length > 0;
@@ -84,7 +84,9 @@ export function GenerationSettings({ modelId, model, onReload }: { modelId: stri
             </span>
           </>
         ) : (
-          <span class="small muted">{t('Fixed on phones: a longer prompt needs a bigger GPU buffer than phones allow.')}</span>
+          <span class="small muted">{model.vision
+            ? t('Fixed at 2,048 tokens on phones: this model reads prompts in blocks larger than phones’ GPUs allow.')
+            : t('Fixed for this model on this device.')}</span>
         )}
       </div>
     </div>

@@ -139,15 +139,46 @@ function defaultModel(d: DeviceReport, dec: TierDecision): ModelInfo | undefined
   return text.filter((m) => rank(m.tier) <= rank(dec.tier)).at(-1) ?? text[0];
 }
 
+const MiB = 1024 * 1024;
+
 /**
- * Context sizes the user may pick for a model (Settings → Model → Generation),
- * or none on phones: Android stays at 2048 tokens, since a longer prompt needs a
- * GPU buffer over the 128 MiB many phones allow (see chatOpts in the worker).
+ * Phones: context sizes a text model can use. Phones refuse any GPU buffer over 128 MiB, but
+ * what grows with the context is the conversation memory (KV cache), held in one buffer per
+ * layer: each must stay under 96 MiB, and all of them under 1 GiB. (Prompts are processed in
+ * 1,024-token chunks whatever the context, ~72 MiB for text models.) The vision model's library
+ * processes 2,048 tokens at a time (144 MiB), so it stays at 2048; so do models without figures.
+ * `f32`: the 32-bit build (no 16-bit shaders), whose memory doubles.
  */
-export function contextChoices(m: ModelInfo): number[] {
+export function phoneContexts(m: ModelInfo, f32 = false): number[] {
+  if (m.vision || m.workspaceBytes || !m.kv) return [];
+  const { layers, perToken: raw } = m.kv;
+  const perToken = raw * (f32 ? 2 : 1);
+  return [2048, 4096, 8192].filter((n) =>
+    n <= (m.maxContext ?? 4096) && perToken * n <= 1024 * MiB && (perToken / layers) * n <= 96 * MiB);
+}
+
+/** Phones, "Auto": the largest context whose conversation memory stays within 640 MiB. */
+export function phoneAutoContext(m: ModelInfo, f32 = false): number {
+  const perToken = (m.kv?.perToken ?? Infinity) * (f32 ? 2 : 1);
+  return [...phoneContexts(m, f32)].reverse().find((n) => perToken * n <= 640 * MiB) ?? 2048;
+}
+
+const isF32 = (id: string) => /q\d+f32/.test(id);
+
+/** Context sizes the user may pick for a model (Settings → Model → Generation); none = fixed. */
+export function contextChoices(m: ModelInfo, id = ''): number[] {
   if (isNativeModel(m)) return nativeGpu ? nativeContexts(m, nativeGpu) : [];
-  if (!device || device.platform.isMobile) return [];
+  if (!device) return [];
+  if (device.platform.isMobile) {
+    const sizes = phoneContexts(m, isF32(id));
+    return sizes.length > 1 ? sizes : [];
+  }
   return [2048, 4096, 8192, 16384, 32768].filter((n) => n <= (m.maxContext ?? m.contextWindow ?? 4096));
+}
+
+/** The context to load with when the user left it on Auto: phones decide by memory; elsewhere the model's default. */
+function autoContext(m: ModelInfo, id: string): number | undefined {
+  return device?.platform.isMobile && !isNativeModel(m) && contextChoices(m, id).length ? phoneAutoContext(m, isF32(id)) : undefined;
 }
 
 /**
@@ -244,15 +275,21 @@ export async function start(id: string): Promise<void> {
   await setSetting('selection', { modelId: id });
   await deleteSetting('pendingDownload');
   set({ kind: 'running', modelId: id, model, totalBytes, downloading: !complete, progress: { stage: 'init', fraction: 0, text: t('Starting…') } });
+  const progress = Comlink.proxy((p: Parameters<typeof parseProgress>[0]) => {
+    // Progress arrives on its own port and may trail the resolved result.
+    if (token === run && state.kind === 'running') set({ ...state, progress: parseProgress(p) });
+  });
+  const wanted = contextChoices(model, id).length ? ((await getGenSettings(id)).contextWindow ?? autoContext(model, id)) : undefined;
   try {
-    const { contextWindow } = await engine().load(
-      id,
-      Comlink.proxy((p) => {
-        // Progress arrives on its own port and may trail the resolved result.
-        if (token === run && state.kind === 'running') set({ ...state, progress: parseProgress(p) });
-      }),
-      contextChoices(model).length ? (await getGenSettings(id)).contextWindow : undefined,
-    );
+    let contextWindow: number;
+    try {
+      ({ contextWindow } = await engine().load(id, progress, wanted));
+    } catch (e) {
+      // A phone that can't hold a longer context: load it as before, at 2048 tokens.
+      if (!device?.platform.isMobile || !wanted || wanted <= 2048 || token !== run) throw e;
+      console.warn(`Loading at ${wanted} tokens failed, retrying at 2048`, e);
+      ({ contextWindow } = await engine().load(id, progress, 2048));
+    }
     if (token !== run) return;
     set({ kind: 'ready', modelId: id, model, contextWindow });
   } catch (e) {

@@ -65,14 +65,14 @@ if (ANDROID) {
     set() {},
   });
 }
-// 2048 tokens on Android, for every model, the vision one included. Besides
-// leaving GPU memory headroom, it bounds the prefill: Phi-3's per-token
-// activation buffer is 72 KiB, so a full 2048-token prefill chunk needs a
-// 144 MiB binding, over the 128 MiB that phones like the OnePlus 13R allow
-// (seen as "Binding size (150994944) … is larger than … (134217728)", then an
-// empty answer). With 2048 tokens and a 512-token answer, a prompt is at most
-// 1,536 tokens (~108 MiB), which fits; a phone-sized image is 1,357 of them.
-const chatOpts = (contextWindow?: number) => (ANDROID ? { context_window_size: 2048 } : contextWindow ? { context_window_size: contextWindow } : undefined);
+// On Android, a model loads at 2048 tokens unless the app asks for more (text models whose
+// conversation memory fits: see phoneContexts in boot.ts). The vision model must stay at
+// 2048: Phi-3's per-token activation buffer is 72 KiB and its library prefills in 2048-token
+// chunks, a 144 MiB binding, over the 128 MiB that phones like the OnePlus 13R allow (seen as
+// "Binding size (150994944) … is larger than … (134217728)", then an empty answer). With 2048
+// tokens and a 512-token answer, a prompt is at most 1,536 tokens (~108 MiB), which fits; a
+// phone-sized image is 1,357 of them. Text models' libraries prefill 1024 tokens at a time.
+const chatOpts = (contextWindow?: number) => (contextWindow ? { context_window_size: contextWindow } : ANDROID ? { context_window_size: 2048 } : undefined);
 
 /** The context size each model was last loaded with (switching back after a vision answer reuses it). */
 const contextOf = new Map<string, number | undefined>();
@@ -364,7 +364,7 @@ const api = {
    * returns at once instead of queueing behind a generation that's winding down.
    */
   /**
-   * `contextWindow`: tokens to keep in mind (desktop; Android is always 2048).
+   * `contextWindow`: tokens to keep in mind (on Android, 2048 unless given).
    * Omitted, the model's last choice is reused. A different size reloads it.
    */
   load: async (modelId: string, onProgress: ProgressFn, contextWindow?: number): Promise<{ contextWindow: number }> => {
