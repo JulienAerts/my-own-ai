@@ -138,6 +138,21 @@ The README's screenshots come from `SCREENSHOTS=1 npx playwright test screenshot
 How it works inside — WebGPU limits on phones, the tool-calling grammars, the sandbox, the native engines — is written up in
 [docs/ENGINEERING.md](docs/ENGINEERING.md).
 
+## Code signing policy
+
+Windows releases are to be signed through the SignPath Foundation (application under review; until
+then the installers are unsigned, hence the SmartScreen warning above).
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
+
+- **What gets signed**: only the Windows installer built by this repository's
+  [release workflow](.github/workflows/desktop.yml) from the tagged source, on GitHub Actions. Nothing built elsewhere
+  is signed, and nothing from other projects is signed under this project's name.
+- **Roles**: committers and reviewers are the repository's maintainers; every signing request is approved by the
+  repository owner. Changes from other contributors arrive through reviewed pull requests.
+- **Privacy**: the app doesn't send your conversations, documents or memories anywhere. It connects to the internet only
+  for what is listed under [Privacy](#privacy): model and voice downloads you start, web tools when they're used (each can be
+  turned off), connectors you add, and the desktop app's update check on GitHub. Settings → Network lists every request.
+
 ## Contributing
 
 Bug reports, ideas and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).

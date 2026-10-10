@@ -41,6 +41,9 @@ jobs:
           - Windows: run the `-setup.exe` (SmartScreen: More info → Run anyway).
           - macOS: open the `.dmg` and drag the app to Applications; the first time, right-click it → Open.
           - Linux: the `.AppImage` (make it executable) or the `.deb`.
+          - Android: the `.apk` (allow installs from your browser when Android asks).
+
+          Code signing policy: https://github.com/JulienAerts/my-own-ai#code-signing-policy
           HELP
           } > "$RUNNER_TEMP/body.md"
 
@@ -137,6 +140,9 @@ jobs:
             - Windows: run the `-setup.exe` (SmartScreen: More info → Run anyway).
             - macOS: open the `.dmg` and drag the app to Applications; the first time, right-click it → Open.
             - Linux: the `.AppImage` (make it executable) or the `.deb`.
+            - Android: the `.apk` (allow installs from your browser when Android asks).
+
+            Code signing policy: https://github.com/JulienAerts/my-own-ai#code-signing-policy
           releaseDraft: false
           prerelease: false
           includeUpdaterJson: true
